@@ -1,0 +1,328 @@
+% ============================================================
+%  Dublin — reusable components
+%  Loaded after dublin-theme.tex.
+% ============================================================
+
+\tcbset{
+  dgbase/.style={
+    enhanced, sharp corners, boxrule=0pt, frame hidden,
+    left=1.1em, right=1.1em, top=0.75em, bottom=0.75em,
+    fontupper=\small, halign=flush left
+  }
+}
+
+% ---------- callout boxes ----------
+% Five boxes, one shape: a flat wash panel with a coloured bar down the left.
+% Every one takes an optional title, so there is a single thing to remember.
+% The bar colour is the only difference between them.
+%
+%   \begin{takeaway}[What this changes] ... \end{takeaway}
+%   \begin{result} ... \end{result}
+%
+% From markdown the Lua filter turns
+%   ::: {.takeaway title="What this changes"}
+% into the same thing, and drops the title if there is none.
+
+\newcommand{\dgboxtitle}[3]{%
+  % #1 title colour, #2 title text, #3 sets whether a title was given
+  \ifx\relax#2\relax\else
+    {\color{#1}\bfseries\footnotesize\MakeUppercase{#2}\par\vspace{0.3em}}%
+  \fi
+  \color{dgInk}\mdseries#3%
+}
+
+\newtcolorbox{dgcallout}[2][dgGreen]{%
+  dgbase, colback=dgWash, borderline west={3pt}{0pt}{#1}, #2
+}
+
+% takeaway -- the one thing they should leave with
+\newenvironment{takeaway}[1][]{%
+  \begin{dgcallout}[dgGreen]{}\dgboxtitle{dgGreen}{#1}{}%
+}{\end{dgcallout}}
+
+% result -- a finding, stated flatly
+\newenvironment{result}[1][]{%
+  \begin{dgcallout}[dgBlue]{}\dgboxtitle{dgBlue}{#1}{}%
+}{\end{dgcallout}}
+
+% caveat -- a limitation or an assumption
+\newenvironment{caveat}[1][]{%
+  \begin{dgcallout}[dgMuted]{}\dgboxtitle{dgMuted}{#1}{}%
+}{\end{dgcallout}}
+
+% defn -- a definition, for teaching. Title runs inline with the body.
+\newenvironment{defn}[1][]{%
+  \begin{dgcallout}[dgNavy]{}%
+  \ifx\relax#1\relax\else{\color{dgNavy}\bfseries #1\ \ }\fi
+  \color{dgInk}\mdseries%
+}{\end{dgcallout}}
+
+% worked -- a worked example, for teaching
+\newenvironment{worked}[1][]{%
+  \begin{dgcallout}[dgBlue]{}\dgboxtitle{dgBlue}{#1}{\small}%
+}{\end{dgcallout}}
+
+% Kept so older decks still build; \begin{takeaway}[Title] is the way now.
+\newenvironment{takeawaytitled}[1]{\begin{takeaway}[#1]}{\end{takeaway}}
+
+% ---------- numbered contributions ----------
+% \contribution{1}{Heading}{Body text.}
+\newcommand{\contribution}[3]{%
+  \par\vspace{0.5em}
+  \noindent
+  \begin{minipage}[t]{1.6em}\raggedright
+    {\color{dgGreen}\bfseries\large #1}
+  \end{minipage}%
+  \begin{minipage}[t]{\dimexpr\linewidth-1.9em\relax}\raggedright
+    {\color{dgNavy}\bfseries #2}\\[0.15em]
+    {\small #3}
+  \end{minipage}
+  \par\vspace{0.35em}
+}
+
+% ---------- headline number ----------
+% \statline{0.22pp}{lower annual income growth at median exposure}
+\newcommand{\statline}[2]{%
+  \begin{minipage}[t]{\linewidth}\raggedright
+    {\color{dgNavy}\bfseries\fontsize{30}{32}\selectfont #1}\\[0.25em]
+    {\color{dgMuted}\small #2}
+  \end{minipage}%
+}
+% Two across: \statrowii{a}{la}{b}{lb}
+\newcommand{\statrowii}[4]{%
+  \noindent
+  \begin{minipage}[t]{0.48\linewidth}\statline{#1}{#2}\end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}\statline{#3}{#4}\end{minipage}%
+}
+% Three across: \statrow{a}{la}{b}{lb}{c}{lc}
+\newcommand{\statrow}[6]{%
+  \noindent
+  \begin{minipage}[t]{0.32\linewidth}\statline{#1}{#2}\end{minipage}\hfill
+  \begin{minipage}[t]{0.32\linewidth}\statline{#3}{#4}\end{minipage}\hfill
+  \begin{minipage}[t]{0.32\linewidth}\statline{#5}{#6}\end{minipage}%
+}
+
+% ---------- appendix navigation ----------
+% Three levels, so a deck can signal how far off-path a jump goes.
+%   \jumpto{label}{Text}     level 1, green          — the one you expect
+%                                                       to be asked
+%   \jumpto[2]{label}{Text}  level 2, blue on white  — the supporting slide
+%   \jumpto[3]{label}{Text}  level 3, navy           — background detail
+%   \backto{label}{Back}     level 3                 — the return
+%
+% Three levels, and the return is simply the third of them: a way back is the
+% quietest thing in the row. Level 1 is the loudest because the row exists to
+% mark the key link, not to list everything behind the talk. Green goes on
+% the slide you wrote the appendix for; the quieter levels carry the rest.
+% Mark the destination with \hypertarget{label}{} on that frame.
+\newcommand{\dgpill}[4]{%
+  \hyperlink{#1}{%
+    \tikz[baseline=(b.base)]{
+      \node[fill=#3, text=#4, font=\bfseries\scriptsize,
+            inner xsep=0.6em, inner ysep=0.4em] (b) {\MakeUppercase{#2}};}}%
+}
+% One level scale, shared by jumps and returns, so a back button is the
+% same object in a different colour rather than a different object.
+%   White type throughout. 0 and 3 navy, 1 green, 2 blue.
+\newcommand{\dglevel}[3]{%
+  \ifcase#1\relax
+        \dgpill{#2}{#3}{dgNavy}{white}%   % 0, kept as an alias of level 3
+    \or \dgpill{#2}{#3}{dgGreen}{white}%
+    \or \dgpill{#2}{#3}{dgBlue}{white}%
+    \or \dgpill{#2}{#3}{dgNavy}{white}%
+  \fi
+}
+\newcommand{\jumpto}[3][1]{\dglevel{#1}{#2}{#3}}
+% The return is level 3: a way back is the quietest thing in the row.
+\newcommand{\backto}[3][3]{\dglevel{#1}{#2}{#3}}
+
+% A row of jumps, pushed to the foot of the frame:
+%     \navrow{\jumpto{rob}{Robustness} \jumpto[3]{data}{Data}}
+\newcommand{\navrow}[1]{\vfill\noindent #1\vspace{0.6em}}
+
+% ---------- contents ----------
+% A navigable contents slide, for a lecture where students need to see the
+% shape of the hour. Entries are live links: clicking one jumps to that
+% section. Content-only, so it goes inside an ordinary "##" frame.
+% Entries are live links -- clicking one jumps to that section -- and they
+% inherit the same template the section dividers use, so the contents slide
+% and the dividers read as one list rather than two.
+% Keep this in the ordinary vertical list. A minipage here is as tall as the
+% text area allows and pushes the footer off the slide, and so does changing
+% \rightskip inside the group -- both were tried.
+% The first \tableofcontents in a document leaves a stray skip behind when it
+% reads the .toc file, which is enough to push the footer off the slide. A
+% box of fixed height bounds it, so the contents slide sits the same whether
+% it is the first one in the deck or the fifth.
+\newcommand{\toccontent}{%
+  \begin{minipage}[t][0.70\textheight][t]{\linewidth}
+    \raggedright
+    \tableofcontents[hideallsubsections]
+  \end{minipage}%
+}
+
+% ---------- handouts ----------
+% For teaching: print several slides to a page for students. Put one of these
+% in header-includes, and add `handout` to classoption so overlays collapse.
+%     classoption: [t, handout]
+\newcommand{\handouttwoup}{%
+  \pgfpagesuselayout{2 on 1}[a4paper, border shrink=5mm]%
+}
+\newcommand{\handoutfourup}{%
+  \pgfpagesuselayout{4 on 1}[a4paper, landscape, border shrink=5mm]%
+}
+
+% ---------- references ----------
+% Quarto renders citations with citeproc into a CSLReferences environment.
+% For APA 7, set in the front matter:
+%     bibliography: refs.bib
+%     csl: https://www.zotero.org/styles/apa
+% References run long, so give the frame [allowframebreaks].
+% The list starts hard against the rule under the frame title otherwise.
+\AtBeginEnvironment{CSLReferences}{%
+  \vspace{0.5em}\footnotesize\setlength{\parskip}{0.45em}%
+}
+
+% ---------- quiet source line under an exhibit ----------
+\newcommand{\source}[1]{%
+  \par\vspace{0.35em}{\color{dgMuted}\scriptsize #1\par}%
+}
+
+% ---------- title-slide badge ----------
+% \badge{Job Market Paper} — place inside \title{} or on the title slide
+\newcommand{\badge}[1]{%
+  \tikz[baseline=(b.base)]{
+    \node[fill=dgGreen, text=dgNavy, font=\bfseries\scriptsize,
+          inner xsep=0.55em, inner ysep=0.35em] (b) {\MakeUppercase{#1}};
+  }%
+}
+
+% ---------- figures ----------
+% Content-only helpers, so they work inside a Quarto "##" frame.
+%   \fig{path}{caption}                 one exhibit, sized to the frame
+%   \figpair{pathA}{capA}{pathB}{capB}  two side by side
+%
+% The caption names the exhibit and autonumbers. Source and detail go
+% underneath in \dgnotes{} — do not fold them into the caption.
+% \tabcaption{...} is the table equivalent; put it above the table, as in
+% a paper, with \dgnotes{} below.
+\newcommand{\figcaption}[1]{%
+  \refstepcounter{figure}%
+  {\raggedright\footnotesize\color{dgInk}%
+   \textbf{Figure \thefigure:}\ #1\par}%
+}
+\newcommand{\tabcaption}[1]{%
+  \refstepcounter{table}%
+  {\raggedright\footnotesize\color{dgInk}%
+   \textbf{Table \thetable:}\ #1\par\vspace{0.15em}}%
+}
+\newcommand{\fig}[2]{%
+  {\centering
+   \includegraphics[width=\linewidth, height=0.56\textheight, keepaspectratio]{#1}\par}%
+  \ifx\relax#2\relax\else\vspace{0.45em}\figcaption{#2}\fi
+}
+% Two figures side by side, each numbered in its own right: a pair is two
+% exhibits, not one exhibit in two panels.
+\newcommand{\figpair}[4]{%
+  \noindent
+  \begin{minipage}[t]{0.48\linewidth}
+    {\centering\includegraphics[width=\linewidth, height=0.50\textheight,
+       keepaspectratio]{#1}\par}%
+    \vspace{0.35em}\figcaption{#2}%
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    {\centering\includegraphics[width=\linewidth, height=0.50\textheight,
+       keepaspectratio]{#3}\par}%
+    \vspace{0.35em}\figcaption{#4}%
+  \end{minipage}%
+}
+
+% ---------- full-bleed figure frame ----------
+% \figureframe{Frame title}{path/to/fig.pdf}{Source note.}
+\newcommand{\figureframe}[3]{%
+  \begin{frame}{#1}
+    \centering
+    \includegraphics[width=\linewidth, height=0.72\textheight, keepaspectratio]{#2}
+    \ifx\relax#3\relax\else\source{#3}\fi
+  \end{frame}%
+}
+
+% ---------- closing frame ----------
+% \thanksframe{sam.deegan@ucdconnect.ie}{sam-deegan.com}
+\newcommand{\thanksframe}[2]{%
+  \begingroup
+  \begin{frame}[plain,noframenumbering]
+    \thankscontent{#1}{#2}
+  \end{frame}
+  \endgroup
+}
+% ---------- appendix divider ----------
+\newcommand{\appendixframe}{%
+  \appendix
+  \dgappendixstart
+  \begingroup
+  \setbeamercolor{background canvas}{bg=dgWash}
+  \begin{frame}[plain,noframenumbering]
+    \vfill
+    \begin{minipage}{\dimexpr\paperwidth-2.6cm\relax}
+      \raggedright
+      {\color{dgBlue}\bfseries\small\MakeUppercase{Backup}\par}
+      \vspace{0.35em}
+      {\color{dgNavy}\bfseries\LARGE Appendix\par}
+      \vspace{0.7em}{\color{dgGreen}\rule{2.2cm}{2pt}}
+    \end{minipage}
+    \vfill
+  \end{frame}
+  \endgroup
+}
+
+% ============================================================
+%  Frame-safe variants, for Quarto
+%
+%  \thanksframe and \appendixframe above create their own frame, which
+%  suits plain LaTeX. Under Quarto a "##" heading has already opened the
+%  frame, so use these inside a `## {.plain}` slide instead.
+% ============================================================
+
+% Paint the whole page a colour from inside an open frame.
+\newcommand{\fullbleed}[1]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[#1] (current page.south west) rectangle (current page.north east);
+  \end{tikzpicture}%
+}
+
+\makeatletter
+\newcommand{\thankscontent}[2]{%
+  \begin{tikzpicture}[remember picture, overlay]\dg@coverbg{0.12}\end{tikzpicture}%
+  \vfill
+  \begin{minipage}{\dimexpr\paperwidth-2.6cm\relax}
+    \raggedright
+    {\color{white}\bfseries\LARGE Thank you\par}
+    \vspace{0.8em}{\color{dgGreen}\rule{2.6cm}{2pt}\par}
+    \vspace{0.8em}
+    {\color{white}\normalsize #1\par}
+    {\color{dgRule}\normalsize #2\par}
+  \end{minipage}
+  \vfill
+  \ifx\dg@thanksqr\@empty\else
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[anchor=south east, fill=white, inner sep=5pt, rounded corners=2pt]
+        at ($(current page.south east)+(-1.4cm,1.4cm)$)
+        {\includegraphics[width=2.4cm]{\dg@thanksqr}};
+    \end{tikzpicture}%
+  \fi
+}
+\makeatother
+
+\newcommand{\appendixcontent}{%
+  \dgappendixstart
+  \fullbleed{dgWash}%
+  \vfill
+  \begin{minipage}{\dimexpr\paperwidth-2.6cm\relax}
+    \raggedright
+    {\color{dgBlue}\bfseries\small\MakeUppercase{Backup}\par}
+    \vspace{0.35em}{\color{dgNavy}\bfseries\LARGE Appendix\par}
+    \vspace{0.7em}{\color{dgGreen}\rule{2.2cm}{2pt}}
+  \end{minipage}
+  \vfill
+}

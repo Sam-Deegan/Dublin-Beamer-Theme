@@ -1,0 +1,188 @@
+---
+title: "Your Paper Title Goes Here"
+subtitle: "A Subtitle That Says What the Paper Does"
+short-title: "Short Title"
+author: "Your Name"
+institute: "Your Institution"
+date: "September 2026"
+format: dublin-beamer
+bibliography: refs.bib
+csl: https://www.zotero.org/styles/apa
+
+# The cover and the closing slide. Replace these three with your own
+# photograph, your institution's mark and a QR code for your site.
+cover-photo: cover-dublin.png
+cover-logo: ucd-crest.png
+qr-code: qr-sam-deegan.png
+cover-badge: Job Market Paper
+---
+
+## The Question
+
+- Open with the thing the audience already believes, so the paper has
+  something to push against.
+- State the question in one sentence. If it takes two, it is two questions.
+- Say why it has not been answered: the data did not exist, the variation was
+  not there, the identification was not available.
+
+::: {.takeaway title="What this paper changes"}
+One sentence the audience should still be able to repeat in the corridor an
+hour later. Write it before you write the slides.
+:::
+
+## Headline Estimates
+
+::: {.stats}
+- **0.41 s.d.** the effect at the median
+- **1 in 4** attenuation from measurement error
+- **62,400** unit-years in the panel
+:::
+
+Put the answer on the third slide. A seminar audience decides in five minutes
+whether to keep listening, and a paper that withholds its result until slide
+thirty is asking them to wait on trust.
+
+# Design
+
+## Three Contributions
+
+::: {.contributions}
+1. **The first thing the paper does** One sentence on why it matters. Keep
+   the claim narrow enough that you could defend it alone.
+2. **The second thing** Something the existing literature assumes rather than
+   estimates, and that you can now measure.
+3. **The third thing** Where the estimate varies, and why that variation is
+   the interesting part rather than a nuisance.
+:::
+
+## The Specification
+
+$$
+  y_{it} = \alpha_i + \delta_t + \beta D_{it}
+    + \gamma \sum_{j \neq i} w_{ij} D_{jt} + \varepsilon_{it}
+$$
+
+where $D_{it}$ is treatment and $w_{ij}$ a weight on the link between $i$ and
+$j$. Say what each term is doing in words before you defend it, and name the
+one coefficient the talk is about.
+
+::: {.caveat}
+State the identifying assumption here rather than in the appendix. The
+audience is going to ask; answering first is cheaper than being asked.
+:::
+
+# Results
+
+## Main Estimates {#main}
+
+```{=latex}
+\tabcaption{Effect of Treatment on the Outcome}
+\renewcommand{\arraystretch}{0.95}
+\begin{dgtable}[\scriptsize]{l cccc}
+ & \multicolumn{4}{c}{\thead{Dependent Variable: Outcome$_{i,t}$}} \\
+\cmidrule{2-5}
+ & \multicolumn{2}{c}{\thead{OLS}} & \multicolumn{2}{c}{\thead{IV}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & \thead{(1)} & \thead{(2)} & \thead{(3)} & \thead{(4)} \\
+\midrule
+\dgpanel{5}{Panel A: Independent Variables}
+\hl{Treatment$_{i,t}$} & $0.081$ & $0.115$ & $0.196$ & \hl{$0.188$} \\
+                  & (0.027) & (0.031) & (0.058) & (0.064) \\
+\midrule
+\dgpanel{5}{Panel B: Fixed Effects}
+Unit         & \no & \yes & \yes & \yes \\
+Year         & \no & \no  & \yes & \yes \\
+Region--Year & \no & \no  & \no  & \yes \\
+\midrule
+\dgpanel{5}{Panel C: Model Summary Statistics}
+First-stage $F$ & --- & --- & 38.4 & 27.6 \\
+Observations & 62{,}400 & 62{,}400 & 62{,}400 & 62{,}118 \\
+\end{dgtable}
+```
+
+::: {.tablenotes}
+Treatment is instrumented in (3) and (4). Standard errors clustered by unit.
+:::
+
+::: {.nav}
+- [Robustness](#rob)
+- [Identification](#ident){.level2}
+- [Data](#data){.level3}
+:::
+
+## Dynamics
+
+![Estimated Effect by Period Since Treatment](examples/event-study.png){width=76%}
+
+::: {.tablenotes}
+Shaded band is a 95 per cent confidence interval. Say what the pre-period
+shows before you say what the post-period shows.
+:::
+
+## Treated and Control Paths
+
+```{=latex}
+\figpair
+  {examples/trend-treated.png}{Treated Units}
+  {examples/trend-control.png}{Control Units}
+```
+
+::: {.tablenotes}
+Realised path in navy, counterfactual dashed in green.
+:::
+
+## What It Adds Up To
+
+::: {.takeaway title="The result"}
+Restate the headline in the same words you used on slide three. An audience
+that hears it twice remembers it; one that hears two versions remembers
+neither.
+:::
+
+- The mechanism, in one line.
+- Where the estimate does not hold, said plainly [@callaway2021].
+- What you would need to go further, which is also your next paper.
+
+## {.plain}
+
+::: {.thanks email="you@university.edu" site="your-site.com"}
+:::
+
+## {.plain}
+
+::: {.appendix}
+:::
+
+## Robustness {#rob}
+
+- Alternative specifications.
+- Rolling windows.
+- Placebo distribution.
+
+::: {.nav}
+- [Back](#main){.back}
+:::
+
+## Identification {#ident}
+
+The assumption, stated formally, and the test that speaks to it.
+
+::: {.nav}
+- [Back](#main){.back}
+- [Robustness](#rob){.level1}
+:::
+
+## Data {#data}
+
+- Sources, and the period each covers.
+- How the sample was built, and what it drops.
+- The variable definitions someone would need to replicate you.
+
+::: {.nav}
+- [Back](#main){.back}
+:::
+
+## References {.allowframebreaks}
+
+::: {#refs}
+:::

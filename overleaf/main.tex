@@ -1,0 +1,117 @@
+\documentclass[aspectratio=169,11pt,t]{beamer}
+
+\input{dublin-theme.tex}
+\input{dublin-components.tex}
+
+\coverphoto{cover-dublin.png}
+\coverscrim{0.42}
+\coverbadge{Job Market Paper}
+\coverlogo{ucd-crest.png}
+\thanksqr{qr-sam-deegan.png}
+\shorttitle{Your Paper}
+
+\title{Your Paper}
+\subtitle{The Subtitle}
+\author{Your Name}
+\institute{Your Institution}
+\date{September 2026}
+
+\begin{document}
+
+\begin{frame}[plain,noframenumbering]
+  \titlepage
+\end{frame}
+
+\begin{frame}{Bare}
+  \tableofcontents[hideallsubsections]
+\end{frame}
+
+\begin{frame}{Outline}
+  \toccontent
+\end{frame}
+
+\section{Writing a Slide}
+
+\begin{frame}{Lists and Boxes}
+  \begin{itemize}
+    \item One colour scale for both kinds of list.
+    \begin{itemize}
+      \item A second level.
+      \begin{itemize}\item A third.\end{itemize}
+    \end{itemize}
+  \end{itemize}
+
+  \begin{takeaway}[What this changes]
+    Every box takes an optional title.
+  \end{takeaway}
+
+  \begin{result}
+    A finding, stated flatly.
+  \end{result}
+\end{frame}
+
+\begin{frame}{Headline Numbers}
+  \statrow
+    {0.22pp}{the effect at the median}
+    {2 in 5}{overstatement without the second channel}
+    {3{,}062}{units in the panel}
+
+  \vspace{1.2em}
+  \contribution{1}{The first thing the paper does}%
+    {One sentence saying why it matters.}
+\end{frame}
+
+\begin{frame}{An Equation}
+  \begin{equation}
+    y_{it} = \alpha_i + \delta_t + \beta D_{it} + \varepsilon_{it}
+  \end{equation}
+  Numbered, in bold green, counting across the deck.
+\end{frame}
+
+\section{Exhibits}
+
+\begin{frame}{A Figure}
+  \fig{examples/event-study.png}{Estimated Effect by Period Since Treatment}
+  \dgnotes{Shaded band is a 95 per cent confidence interval.}
+\end{frame}
+
+\begin{frame}{A Table}
+  \tabcaption{Effect of Treatment on the Outcome}
+  \renewcommand{\arraystretch}{0.92}
+  \begin{dgtable}{l rrr}
+   & \multicolumn{3}{c}{\thead{Outcome$_{i,t}$}} \\
+  \cmidrule{2-4}
+   & \thead{(1)} & \thead{(2)} & \thead{(3)} \\
+  \midrule
+  \dgpanel{4}{Panel A: Independent Variables}
+  Treatment$_{i,t}$ & $-0.114$ & $-0.221$ & $-0.219$ \\
+                    & (0.041)  & (0.078)  & (0.081)  \\
+  \hl{Spillover$_{j,t}$} & & & \hl{$-0.098$} \\
+  \midrule
+  \dgpanel{4}{Panel B: Fixed Effects}
+  Unit FE & \no  & \yes & \yes \\
+  Year FE & \yes & \yes & \yes \\
+  \end{dgtable}
+  \dgnotes{Standard errors in parentheses.}
+\end{frame}
+
+\begin{frame}{Appendix Jumps}\hypertarget{main}{}
+  Three levels, so the row says how far off-path each jump goes.
+  \navrow{\jumpto{rob}{Robustness} \jumpto[3]{data}{Data}}
+\end{frame}
+
+\thanksframe{you@university.edu}{your-site.com}
+
+\appendixframe
+
+\begin{frame}{Data}\hypertarget{data}{}
+  Appendix content.
+  \navrow{\backto{main}{Back}}
+\end{frame}
+
+\begin{frame}{Robustness}\hypertarget{rob}{}
+  Appendix content.
+  \navrow{\backto{main}{Back}}
+\end{frame}
+
+\end{document}

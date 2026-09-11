@@ -1,0 +1,26 @@
+# RStudio
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# LaTeX and Quarto build output
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+.quarto/
+_book/
+_site/
+
+# Test builds
+tests/build/
+
+# The rendered decks are committed deliberately (showcase.pdf, example.pdf);
+# everything else a render drops is not.

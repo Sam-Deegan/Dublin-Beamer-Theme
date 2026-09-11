@@ -1,0 +1,491 @@
+% ============================================================
+%  Dublin — a modernised Beamer template for academic use
+%
+%  Palette taken from www.ucd.ie, matched to sam-deegan.com.
+%  Designed for Quarto -> Beamer, but works in plain LaTeX too:
+%      \documentclass[aspectratio=169]{beamer}
+%      \input{dublin-theme.tex}
+%
+%  Engine: pdflatex, xelatex or lualatex.
+% ============================================================
+
+\makeatletter
+
+% ---------- packages ----------
+\usepackage[T1]{fontenc}
+\usepackage[sfdefault,scale=1.0]{plex-sans}   % IBM Plex Sans
+\usepackage[scale=0.92]{plex-mono}            % IBM Plex Mono for code
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\usepackage{appendixnumberbeamer}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{amssymb}
+\usepackage{etoolbox}
+\usepackage{graphicx}
+\hyphenpenalty=10000 \exhyphenpenalty=10000
+\tcbuselibrary{skins}
+\usetikzlibrary{calc, fadings, shadows.blur}
+
+% ---------- palette ----------
+\definecolor{dgNavy}   {HTML}{04204C}   % headings, title slide ground
+\definecolor{dgBlue}   {HTML}{0056A4}   % structure, links, rules
+\definecolor{dgBlueDk} {HTML}{003C77}
+\definecolor{dgBlueLt} {HTML}{9FC4E0}   % level-1 jumps
+\definecolor{dgGreen}  {HTML}{61B77C}   % the one green: badge, bars, list level 1
+\definecolor{dgInk}    {HTML}{212529}   % body text
+\definecolor{dgMuted}  {HTML}{6C757D}   % captions, footer, notes
+\definecolor{dgRule}   {HTML}{D8E0E6}   % hairlines
+\definecolor{dgWash}   {HTML}{F2F6F9}   % block grounds
+\definecolor{dgGround} {HTML}{FFFFFF}
+
+\setbeamercolor{background canvas}{bg=dgGround}
+\setbeamercolor{normal text}{fg=dgInk}
+\setbeamercolor{structure}{fg=dgBlue}
+\setbeamercolor{alerted text}{fg=dgGreen}
+
+% ---------- chrome we do not want ----------
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[default]      % flat: no shadows, no rounding
+\setbeamersize{text margin left=1.1cm, text margin right=1.1cm}
+\usefonttheme{professionalfonts}
+
+% Maths in the text font, so equations sit with the prose rather than
+% dropping into Computer Modern. Swap for newtxsf or Fira Math if you
+% prefer; both need packages this does not.
+\usepackage[italic, defaultmathsizes]{mathastext}
+
+% ---------- frame title ----------
+% Left aligned, generous space above, a hairline beneath, and an optional
+% second line via \framesubtitle. No coloured bar: the rule does the work.
+\setbeamercolor{frametitle}{fg=dgNavy, bg=}
+\setbeamerfont{frametitle}{series=\bfseries, size=\large}
+\setbeamerfont{framesubtitle}{series=\mdseries, size=\small}
+\setbeamercolor{framesubtitle}{fg=dgMuted}
+
+\setbeamertemplate{frametitle}{%
+  \vspace{0.75em}%
+  \begin{minipage}{\dimexpr\paperwidth-2.2cm\relax}
+    \raggedright
+    \usebeamercolor[fg]{frametitle}\usebeamerfont{frametitle}\insertframetitle%
+    \ifx\insertframesubtitle\@empty%
+    \else{\\[0.15em]\usebeamercolor[fg]{framesubtitle}%
+          \usebeamerfont{framesubtitle}\insertframesubtitle}%
+    \fi
+    \\[0.35em]
+    {\color{dgRule}\rule{\linewidth}{0.6pt}}
+  \end{minipage}%
+  \vspace{-0.55em}
+}
+
+% ---------- footer ----------
+% One hairline, short title on the left, slide number on the right.
+% Suppressed on the title slide: pandoc emits that frame without [plain],
+% so the flag below is how we detect it. \titlepage raises it, the footline
+% sees it and lowers it again.
+% Appendix frames are numbered I, II, III, restarting at the divider, so a
+% long appendix cannot make the talk look twice its length in the footer.
+% \appendix itself is a document-level command and cannot be called from
+% inside a frame, which is where the Quarto route needs it, so the reset is
+% its own macro and \appendixframe / \appendixcontent both call it.
+\newif\ifdg@appendix \dg@appendixfalse
+\newcommand{\dgappendixstart}{%
+  \global\dg@appendixtrue
+  \global\setcounter{framenumber}{0}%
+}
+
+\newif\ifdg@istitle \dg@istitlefalse
+\AtBeginDocument{%
+  \let\dg@origtitlepage\titlepage
+  \renewcommand{\titlepage}{\global\dg@istitletrue\dg@origtitlepage}%
+}
+\setbeamertemplate{footline}{%
+  \ifdg@istitle
+    \global\dg@istitlefalse
+    \addtocounter{framenumber}{-1}%
+  \else
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth, ht=2.6ex, dp=1.6ex, leftskip=1.1cm,
+                           rightskip=1.1cm]{}%
+      % \\ after a rule that exactly fills the measure has no line left to
+      % end, so LaTeX sets the optional argument as text. \par is safe.
+      {\color{dgRule}\rule{\linewidth}{0.4pt}}\par\nobreak\vspace{0.35em}
+      \color{dgMuted}\scriptsize
+      \begingroup\hypersetup{linkcolor=dgMuted}%
+      \ifx\dg@shorttitle\@empty
+        \textcolor{dgMuted}{\insertshorttitle}%
+      \else
+        \textcolor{dgMuted}{\dg@shorttitle}%
+      \fi\hfill
+      \ifdg@appendix
+        \textcolor{dgMuted}{\Roman{framenumber}}%
+      \else
+        \textcolor{dgMuted}{\insertframenumber}%
+      \fi
+      \endgroup
+    \end{beamercolorbox}%
+  }%
+  \fi
+}
+
+% ---------- title slide ----------
+%  Configure in the preamble (or Quarto header-includes):
+%     \coverphoto{dublin.jpg}        optional background photograph
+%     \coverscrim{0.42}              navy over the photo, 0-1
+%     \coverbadge{Job Market Paper}  optional green badge
+%     \coverlogo{ucd-crest.png}      optional mark, top right
+%     \coverlogolift                 soft dark lift behind the mark
+%  With no photo the cover is flat navy.
+\def\dg@coverphoto{}
+\def\dg@coverscrim{0.42}
+\def\dg@coverbadge{}
+\def\dg@coverlogo{}
+\def\dg@thanksqr{}
+% A long title makes a noisy footer, and pandoc has no short-title variable,
+% so the theme takes one of its own: short-title in the front matter.
+\def\dg@shorttitle{}
+\newcommand{\shorttitle}[1]{\def\dg@shorttitle{#1}}
+\newif\ifdg@logolift \dg@logoliftfalse
+\newif\ifdg@logoglow \dg@logoglowfalse
+\newif\ifdg@logovignette \dg@logovignettefalse
+\newif\ifdg@logoshadow \dg@logoshadowfalse
+
+\newcommand{\coverphoto}[1]{\def\dg@coverphoto{#1}}
+\newcommand{\coverscrim}[1]{\def\dg@coverscrim{#1}}
+\newcommand{\coverbadge}[1]{\def\dg@coverbadge{#1}}
+\newcommand{\coverlogo}[1]{\def\dg@coverlogo{#1}}
+\newcommand{\thanksqr}[1]{\def\dg@thanksqr{#1}}
+\newcommand{\coverlogolift}{\dg@logolifttrue}
+\newcommand{\coverlogoglow}{\dg@logoglowtrue}
+% Preferred: darken the corner the mark sits in, or drop a shadow under it.
+% Neither puts an edge on the logo, so neither reads as a bad cut-out.
+\newcommand{\coverlogovignette}{\dg@logovignettetrue}
+\newcommand{\coverlogoshadow}{\dg@logoshadowtrue}
+
+% Photo plus scrim, shared by the cover and the closing slide. With no photo
+% it is flat navy: the photograph is the decoration, and a deck without one
+% is better plain than patterned.
+% #1 is extra navy laid on top, for slides whose text needs more contrast.
+\newcommand{\dg@coverbg}[1]{%
+  \fill[dgNavy] (current page.south west) rectangle (current page.north east);
+  \begin{scope}
+    \clip (current page.south west) rectangle (current page.north east);
+    \ifx\dg@coverphoto\@empty
+    \else
+      \node[anchor=center, inner sep=0pt] at (current page.center)
+        {\includegraphics[width=\paperwidth, height=\paperheight]{\dg@coverphoto}};
+      \fill[dgNavy, opacity=\dg@coverscrim]
+        (current page.south west) rectangle (current page.north east);
+      \ifdim#1pt>0pt
+        \fill[dgNavy, opacity=#1]
+          (current page.south west) rectangle (current page.north east);
+      \fi
+    \fi
+  \end{scope}%
+}
+
+% A long title must not push the badge off the top of the cover, so the title
+% size steps down once it needs more than two lines. Measured, not guessed:
+% the natural single-line width against the width of the column it sits in.
+\newlength{\dg@titlewd}
+\newlength{\dg@titlecol}
+\newcommand{\dg@titlesize}{%
+  \setlength{\dg@titlecol}{0.66\paperwidth}%
+  \settowidth{\dg@titlewd}{\bfseries\fontsize{28}{31}\selectfont\inserttitle}%
+  \ifdim\dg@titlewd>2.6\dg@titlecol
+    \fontsize{20}{23}\selectfont
+  \else
+    \ifdim\dg@titlewd>1.6\dg@titlecol
+      \fontsize{24}{27}\selectfont
+    \else
+      \fontsize{28}{31}\selectfont
+    \fi
+  \fi
+}
+
+\defbeamertemplate*{title page}{deegan}[1][]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \dg@coverbg{0}
+
+    \node[anchor=west, text width=0.66\paperwidth, align=left, inner sep=0pt]
+      at ($(current page.west)+(1.4cm,0.2cm)$)
+      {%
+        \ifx\dg@coverbadge\@empty\else\badge{\dg@coverbadge}\\[1.0em]\fi
+        \color{white}\bfseries\dg@titlesize\inserttitle\\[0.5em]
+        \ifx\insertsubtitle\@empty\else
+          \color{white}\large\mdseries\insertsubtitle\\[1.1em]\fi
+        \textcolor{white}{\rule{2.6cm}{1pt}}\\[1.1em]
+        \color{white}\small\insertauthor\\[0.15em]
+        \ifx\insertinstitute\@empty\else
+          \color{dgRule}\footnotesize\insertinstitute\\[0.35em]\fi
+        \color{dgRule}\footnotesize\insertdate%
+      };
+
+    \ifx\dg@coverlogo\@empty\else
+      \ifdg@logovignette
+        \begin{scope}
+          \clip (current page.south west) rectangle (current page.north east);
+          \fill[dgNavy, opacity=0.55,
+                path fading=circle with fuzzy edge 20 percent]
+            ($(current page.north east)+(-1.4cm,-1.2cm)$) circle (3.6cm);
+        \end{scope}
+      \fi
+      \ifdg@logoglow
+        \fill[white, opacity=0.16,
+              path fading=circle with fuzzy edge 15 percent]
+          ($(current page.north east)+(-1.80cm,-1.63cm)$) circle (0.88cm);
+      \fi
+      \ifdg@logolift
+        \fill[black, opacity=0.28, rounded corners=3pt]
+          ($(current page.north east)+(-2.55cm,-0.62cm)$)
+          rectangle ($(current page.north east)+(-0.95cm,-2.58cm)$);
+      \fi
+      \ifdg@logoshadow
+        \node[anchor=north east, inner sep=0pt,
+              blur shadow={shadow blur radius=7pt, shadow opacity=55,
+                           shadow xshift=0pt, shadow yshift=-1pt}]
+          at ($(current page.north east)+(-1.3cm,-0.9cm)$)
+          {\includegraphics[height=1.45cm]{\dg@coverlogo}};
+      \else
+        \node[anchor=north east, inner sep=0pt]
+          at ($(current page.north east)+(-1.3cm,-0.9cm)$)
+          {\includegraphics[height=1.45cm]{\dg@coverlogo}};
+      \fi
+    \fi
+  \end{tikzpicture}%
+}
+
+% ---------- contents, as shown on section dividers ----------
+\setbeamercolor{section in toc}{fg=dgNavy}
+\setbeamerfont{section in toc}{series=\mdseries, size=\small}
+\setbeamertemplate{section in toc}{%
+  \leavevmode\usebeamerfont{section in toc}%
+  {\color{dgGreen}\bfseries\inserttocsectionnumber.}~%
+  \textcolor{dgNavy}{\inserttocsection}%
+  \par\vspace{0.4em}%
+}
+\setbeamertemplate{section in toc shaded}[default][35]
+
+% ---------- section dividers ----------
+% Number and name, on the wash rather than full navy, so it reads as a
+% breath rather than a second title slide.
+\AtBeginSection[]{%
+  \begingroup
+  \setbeamercolor{background canvas}{bg=dgWash}
+  \begin{frame}[plain,noframenumbering]
+    \vfill
+    \begin{columns}[T,onlytextwidth]
+      \begin{column}{0.50\textwidth}
+        \raggedright
+        {\color{dgBlue}\bfseries\small\MakeUppercase{Section \insertsectionnumber}\par}
+        \vspace{0.35em}
+        {\color{dgNavy}\bfseries\LARGE\insertsectionhead\par}
+        \vspace{0.7em}
+        {\color{dgGreen}\rule{2.2cm}{2pt}}
+      \end{column}
+      \begin{column}{0.42\textwidth}
+        \raggedright
+        \tableofcontents[currentsection, hideallsubsections]
+      \end{column}
+    \end{columns}
+    \vfill
+  \end{frame}
+  \endgroup
+}
+
+% ---------- equations ----------
+% Display maths is numbered, like tables and figures. The Lua filter turns
+% every display equation into an `equation` environment; these two lines set
+% the tag in the palette rather than in plain black, and stop beamer resetting
+% the counter at each section.
+% (this file is already inside \makeatletter, so @ is a letter here)
+\renewcommand{\theequation}{\arabic{equation}}
+\renewcommand{\tagform@}[1]{%
+  \maketag@@@{\bfseries\color{dgGreen}(\ignorespaces #1\unskip\@@italiccorr)}%
+}
+
+% ---------- code ----------
+% Pandoc puts a highlighted block in `Shaded` and a plain one in `verbatim`.
+% Both are set small, on the same wash ground the callout boxes use, so a
+% syntax example on a slide reads as another panel rather than as raw output.
+% fancyvrb arrives with pandoc's highlighting, not with beamer, so a plain
+% LaTeX deck that never shows code does not have \fvset at all.
+\@ifundefined{fvset}{}{\fvset{fontsize=\scriptsize}}
+\AtBeginDocument{%
+  \@ifundefined{Shaded}{}{%
+    \renewenvironment{Shaded}
+      {\begin{tcolorbox}[dgbase, colback=dgWash,
+          borderline west={3pt}{0pt}{dgRule},
+          top=0.55em, bottom=0.55em, left=0.9em, right=0.9em]}
+      {\end{tcolorbox}}%
+  }%
+}
+\AtBeginEnvironment{verbatim}{\scriptsize}
+
+% Pandoc ships a syntax theme in colours that are not ours. Every token is
+% pulled back onto the palette: ink for code, muted for comments, blue for
+% strings and keywords. Code on a slide is read, not parsed.
+\newcommand{\dg@tokcolour}[2]{%
+  \expandafter\ifx\csname #1\endcsname\relax\else
+    \expandafter\renewcommand\csname #1\endcsname[1]{\textcolor{#2}{##1}}%
+  \fi
+}
+\AtBeginDocument{%
+  \@for\dg@tok:={DataTypeTok,DecValTok,BaseNTok,FloatTok,ConstantTok,%
+    CharTok,SpecialCharTok,OtherTok,FunctionTok,VariableTok,OperatorTok,%
+    BuiltInTok,ExtensionTok,AttributeTok,RegionMarkerTok,NormalTok,%
+    PreprocessorTok,InformationTok,WarningTok,ErrorTok,AlertTok}\do{%
+    \expandafter\dg@tokcolour\expandafter{\dg@tok}{dgInk}%
+  }%
+  \@for\dg@tok:={CommentTok,DocumentationTok,AnnotationTok,CommentVarTok}\do{%
+    \expandafter\dg@tokcolour\expandafter{\dg@tok}{dgMuted}%
+  }%
+  \@for\dg@tok:={StringTok,VerbatimStringTok,SpecialStringTok,KeywordTok,%
+    ControlFlowTok,ImportTok}\do{%
+    \expandafter\dg@tokcolour\expandafter{\dg@tok}{dgBlue}%
+  }%
+}
+
+% ---------- lists ----------
+% One colour scale for both kinds of list, so depth reads the same whether
+% a list is numbered or not: green, then blue, then muted. All three use the
+% palette green itself -- there is no second, darker green.
+% Beamer right-aligns the label in its box, so a narrow square sits further
+% right than a numeral of the same level. Each marker is set in a box as wide
+% as the numeral it has to line up with, flush left, so a bulleted list and a
+% numbered list start on the same vertical.
+% Each marker is set in a box exactly as wide as the numeral at that level,
+% flush left, so the measurement maintains itself if the fonts change.
+\newlength{\dg@lblw}
+\newcommand{\dg@marker}[2]{%
+  \settowidth{\dg@lblw}{\bfseries #1}%
+  \makebox[\dg@lblw][l]{#2}%
+}
+\setbeamertemplate{itemize item}{%
+  \dg@marker{1.}{\color{dgGreen}\rule[0.35ex]{0.5em}{0.5em}}}
+\setbeamertemplate{itemize subitem}{%
+  \dg@marker{a.}{\color{dgBlue}\rule[0.35ex]{0.4em}{0.4em}}}
+\setbeamertemplate{itemize subsubitem}{%
+  \dg@marker{i.}{\color{dgMuted}\textendash}}
+\setbeamertemplate{enumerate item}{\color{dgGreen}\bfseries\insertenumlabel.}
+\setbeamertemplate{enumerate subitem}{\color{dgBlue}\insertsubenumlabel.}
+\setbeamertemplate{enumerate subsubitem}{\color{dgMuted}\insertsubsubenumlabel.}
+\setbeamercolor{itemize/enumerate body}{fg=dgInk}
+\setlength{\leftmargini}{1.4em}
+
+% ---------- blocks ----------
+% Flat, with a left accent bar instead of a title bar.
+\setbeamercolor{block title}{fg=dgNavy, bg=dgWash}
+\setbeamercolor{block body}{fg=dgInk, bg=dgWash}
+\setbeamercolor{block title alerted}{fg=white, bg=dgGreen}
+\setbeamercolor{block body alerted}{fg=dgInk, bg=dgWash}
+\setbeamercolor{block title example}{fg=white, bg=dgBlue}
+\setbeamercolor{block body example}{fg=dgInk, bg=dgWash}
+\setbeamerfont{block title}{series=\bfseries, size=\small}
+
+% Continued frames (e.g. a long reference list) keep the plain title.
+\setbeamertemplate{frametitle continuation}{}
+
+% ---------- tables ----------
+% Panelled summary/results tables, full width, booktabs rules, notes block.
+%
+%   \begin{dgtable}{l rrrrrr}
+%     \dgpanel{7}{Panel A: County Outcome Variables}
+%     \thead{Variable} & \thead{Mean} & ... \\ \midrule
+%     Personal Income Growth (\%) & 2.145 & ... \\
+%   \end{dgtable}
+%   \dgnotes{Summary statistics for ...}
+%
+% Everything is black by default; use \hl{} or \hlg{} to mark the one row
+% or cell that carries the argument. Rules span the full text width
+% because the table is a tabular* stretched with \extracolsep.
+\setlength{\aboverulesep}{0pt}\setlength{\belowrulesep}{0pt}
+\setlength{\heavyrulewidth}{0.9pt}\setlength{\lightrulewidth}{0.4pt}
+\arrayrulecolor{dgInk}
+\renewcommand{\arraystretch}{1.18}
+
+% Every table is \footnotesize, however it was written. \dgtable sets its own
+% size, but a markdown table goes through pandoc as a longtable or a plain
+% tabular and would otherwise come out at full body size -- far too big for a
+% slide, since even a small econ table has more columns than body text does.
+% An environment is a group, so each hook undoes itself on \end.
+\AtBeginEnvironment{longtable}{\footnotesize}
+\AtBeginEnvironment{tabular}{\footnotesize}
+\AtBeginEnvironment{tabularx}{\footnotesize}
+\AtBeginEnvironment{table}{\footnotesize}
+
+\newcommand{\thead}[1]{\textcolor{dgInk}{\bfseries #1}}
+% Colour in a table should mean something. \hl marks the row or cell that
+% carries the argument; everything else stays black.
+\newcommand{\hl}[1]{\textcolor{dgBlue}{\bfseries #1}}
+\newcommand{\hlg}[1]{\textcolor{dgGreen}{\bfseries #1}}
+% A panel heading. Emits the heading row only -- put a \midrule above it (or
+% below it, if the panel opens with its own column headings).
+\newcommand{\dgpanel}[2]{%
+  \multicolumn{#1}{@{}l}{\textcolor{dgInk}{\bfseries #2}}\\
+}
+% \begin{dgtable}[\scriptsize]{l rrr} -- optional first argument sets the
+% type size, for a table with more rows than \footnotesize will hold.
+\newenvironment{dgtable}[2][\footnotesize]{%
+  #1%
+  \setlength{\tabcolsep}{0pt}%
+  \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}#2@{}}
+  \toprule
+}{%
+  \bottomrule
+  \end{tabular*}%
+}
+% A colour chip, for the brand-reference slide.
+\newcommand{\swatch}[1]{%
+  \tikz[baseline=-0.35ex]{\fill[#1] (0,0) rectangle (0.75em,0.75em);}\,%
+}
+
+% Fixed-effects rows: a check rather than "Yes". Black, like the rest of the
+% table -- colour is reserved for \hl and \hlg.
+\newcommand{\yes}{\checkmark}
+\newcommand{\no}{}
+
+\newcommand{\dgnotes}[1]{%
+  \par\vspace{0.45em}%
+  {\scriptsize\color{dgInk}\textbf{\textit{Notes:}}\ #1\par}%
+}
+
+% ---------- captions ----------
+% No "Figure 1:" label on a slide; the caption is the sentence under the
+% exhibit, set muted and one size down, left aligned to the figure.
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamerfont{caption}{size=\footnotesize}
+\setbeamerfont{caption name}{size=\footnotesize, series=\bfseries}
+\setbeamercolor{caption}{fg=dgInk}
+\setbeamercolor{caption name}{fg=dgInk}
+% Pandoc loads the caption package for markdown tables. Left-align those
+% captions at the text margin, so a markdown table's caption sits where
+% \tabcaption puts one rather than centred over a narrower table.
+\AtBeginDocument{%
+  \@ifpackageloaded{caption}{%
+    \captionsetup{justification=raggedright, singlelinecheck=false}%
+  }{}%
+}
+
+% Pandoc emits \includegraphics[...,height=\textheight] for a markdown
+% image, which fills the frame and pushes the caption off the slide.
+% A figure environment is a group, so shrinking \textheight inside it
+% bounds the image and restores itself on exit.
+\AtBeginEnvironment{figure}{\setlength{\textheight}{0.50\textheight}}
+
+% ---------- links ----------
+\hypersetup{colorlinks=true, linkcolor=dgBlue, urlcolor=dgBlue,
+            citecolor=dgBlue, filecolor=dgBlue}
+
+% ---------- bibliography ----------
+\setbeamertemplate{bibliography item}{}
+\setbeamercolor{bibliography entry author}{fg=dgNavy}
+\setbeamercolor{bibliography entry title}{fg=dgInk}
+\setbeamerfont{bibliography entry title}{size=\footnotesize}
+\setbeamerfont{bibliography entry author}{size=\footnotesize}
+
+\makeatother
