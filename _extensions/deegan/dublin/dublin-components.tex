@@ -7,7 +7,7 @@
   dgbase/.style={
     enhanced, sharp corners, boxrule=0pt, frame hidden,
     left=1.1em, right=1.1em, top=0.75em, bottom=0.75em,
-    fontupper=\small, halign=flush left
+    fontupper=\footnotesize, halign=flush left
   }
 }
 
@@ -23,10 +23,13 @@
 %   ::: {.takeaway title="What this changes"}
 % into the same thing, and drops the title if there is none.
 
+% One header format for every box: the title on its own line, bold, in the
+% box's own colour, set as typed. It used to be \MakeUppercase and a size
+% down, which made a takeaway look like a different component from a defn.
 \newcommand{\dgboxtitle}[3]{%
   % #1 title colour, #2 title text, #3 sets whether a title was given
   \ifx\relax#2\relax\else
-    {\color{#1}\bfseries\footnotesize\MakeUppercase{#2}\par\vspace{0.3em}}%
+    {\color{#1}\bfseries #2\par\vspace{0.15em}}%
   \fi
   \color{dgInk}\mdseries#3%
 }
@@ -52,29 +55,63 @@
 
 % defn -- a definition, for teaching. Title runs inline with the body.
 \newenvironment{defn}[1][]{%
-  \begin{dgcallout}[dgNavy]{}%
-  \ifx\relax#1\relax\else{\color{dgNavy}\bfseries #1\ \ }\fi
-  \color{dgInk}\mdseries%
+  \begin{dgcallout}[dgNavy]{}\dgboxtitle{dgNavy}{#1}{}%
 }{\end{dgcallout}}
 
 % worked -- a worked example, for teaching
 \newenvironment{worked}[1][]{%
-  \begin{dgcallout}[dgBlue]{}\dgboxtitle{dgBlue}{#1}{\small}%
+  \begin{dgcallout}[dgBlue]{}\dgboxtitle{dgBlue}{#1}{\footnotesize}%
 }{\end{dgcallout}}
+
+% tablenotes -- how to read the exhibit above. Same panel and bar as the
+% rest, one size smaller, with the label running inline as in defn. Set
+% from markdown as ::: {.tablenotes}, via \dgnotes in the Lua filter.
+%
+% \long, because the filter passes the note through as pandoc blocks
+% rather than a flattened string, so the argument can hold a paragraph
+% break.
+\newtcolorbox{dgnotesbox}{%
+  dgbase, colback=dgWash,
+  borderline west={3pt}{0pt}{dgMuted}, top=0.55em, bottom=0.55em
+}
+\makeatletter
+\newcommand{\dgnoteslabel}{Notes}
+\long\def\dgnotes{\@ifnextchar[\dgnotes@opt\dgnotes@plain}
+\long\def\dgnotes@plain#1{\dgnotes@do{\dgnoteslabel}{#1}}
+\def\dgnotes@opt[#1]{\dgnotes@rest{#1}}
+\long\def\dgnotes@rest#1#2{\dgnotes@do{#1}{#2}}
+\long\def\dgnotes@do#1#2{%
+  \par\vspace{0.35em}%
+  \begin{dgnotesbox}%
+    {\color{dgMuted}\bfseries #1\par\vspace{0.15em}}%
+    \color{dgInk}\mdseries#2%
+  \end{dgnotesbox}%
+}
+\makeatother
 
 % Kept so older decks still build; \begin{takeaway}[Title] is the way now.
 \newenvironment{takeawaytitled}[1]{\begin{takeaway}[#1]}{\end{takeaway}}
 
 % ---------- numbered contributions ----------
 % \contribution{1}{Heading}{Body text.}
-\newcommand{\contribution}[3]{%
+%
+% \long, because the Lua filter now passes the heading and the body through
+% as pandoc blocks rather than as flattened LaTeX strings — which is what
+% lets a citation inside a .contributions item reach citeproc. A pandoc
+% block carries a paragraph break, so a non-\long macro would fail on it.
+\long\def\contribution#1#2#3{%
   \par\vspace{0.5em}
   \noindent
   \begin{minipage}[t]{1.6em}\raggedright
     {\color{dgGreen}\bfseries\large #1}
   \end{minipage}%
   \begin{minipage}[t]{\dimexpr\linewidth-1.9em\relax}\raggedright
-    {\color{dgNavy}\bfseries #2}\\[0.15em]
+    % \par rather than \\ : the heading now arrives as a pandoc block and
+    % carries its own paragraph break, and \\ after a \par is "There's no
+    % line here to end". \par-then-\vspace is correct whether or not the
+    % argument ends a paragraph itself.
+    {\color{dgNavy}\bfseries #2\par}
+    \vspace{0.15em}
     {\small #3}
   \end{minipage}
   \par\vspace{0.35em}
@@ -197,6 +234,82 @@
   }%
 }
 
+% ---------- braced terms in equations ----------
+% \dgbrace{i_t - \pi_t - r^*}{real interest rate, relative to the natural rate}
+%
+% A plain \underbrace sets the label at full width, so a label longer than
+% the term it sits under pads the whole equation out and the spacing goes
+% wrong. This sets the label in a zero-width box, centred: the equation
+% spaces as if the label were not there, and the label is free to overhang.
+%
+% One brace per term, and never nested — a brace inside a brace is harder to
+% read than the algebra it explains. Use it at a composite term's FIRST
+% appearance, to say what the combination means.
+\newcommand{\dgbrace}[2]{%
+  \underbrace{#1}_{\makebox[0pt]{\normalfont\footnotesize #2}}%
+}
+
+% \dgbraceover{-\alpha(r_t - r^*) + \varepsilon^y_t}{the short-run deviation}
+%
+% The same thing above the term instead of below it, for when a WHOLE side of
+% an equation is being named — typically to say that a block just written is
+% the same object as something defined earlier. Use it sparingly: one per
+% equation, and never in the same equation as a \dgbrace on the same term.
+\newcommand{\dgbraceover}[2]{%
+  \overbrace{#1}^{\makebox[0pt]{\normalfont\footnotesize #2}}%
+}
+
+% ---------- struck-out term in an equation ----------
+% \dgstrike{(X - M)}   or   \dgstrike[dgBlue]{...}
+%
+% Rules a coloured line through a term, for showing an assumption being
+% imposed — "we close the economy, so net exports go". Works in text and in
+% maths, and keeps the term's natural width so the equation does not reflow.
+%
+% Deliberately NOT \cancel: that needs the cancel package, which is not in
+% this theme and cannot be assumed present on a MiKTeX install with
+% automatic package installation switched off. tikz is already loaded.
+\newcommand{\dgstrike}[2][red]{%
+  \tikz[baseline=(dgst.base)]{%
+    \node[inner sep=0pt, outer sep=0pt] (dgst) {$#2$};
+    \draw[#1, line width=0.9pt] (dgst.south west) -- (dgst.north east);%
+  }%
+}
+
+% ---------- substitution: what is being replaced, and where it lands ----------
+% \dgsub{y_t - y_t^{*}}        the term, in the alert colour
+% \dgsubbg{-\alpha(\beta_\pi - 1)(\pi_t - \pi^*) + \varepsilon^y_t}
+%                              the block that has just landed, tinted
+%
+% A substitution is the step students lose. Two equations are on the slide,
+% one of them is about to go inside the other, and nothing on the page says
+% WHICH PART goes WHERE. The rule is:
+%
+%   1. On the frame that sets the two equations up, mark the SAME object in
+%      both with \dgsub -- the output gap on the left of the IS-MP curve and
+%      the output gap on the right of the Phillips curve are one object, so
+%      they are one colour.
+%   2. On the frame that does the substitution, mark the block that has just
+%      arrived with \dgsubbg, in its new surroundings. That is the "where it
+%      went", and it is the half students cannot reconstruct on their own.
+%   3. Drop the colour the moment the algebra moves on. It marks one step,
+%      not a variable: a term that stays red for three slides has stopped
+%      meaning anything.
+%
+% One substitution per pair of frames. Two colours on one slide is two
+% things to track, which is the problem this solves, not the solution.
+\newcommand{\dgsub}[1]{{\color{dgAlert}#1}}
+
+% The landed block. tikz rather than \colorbox because \colorbox does not
+% behave in display maths, and tikz is already loaded for \dgstrike.
+\newcommand{\dgsubbg}[1]{%
+  \tikz[baseline=(dgsb.base)]{%
+    \node[fill=dgAlertBg, rounded corners=1.5pt, inner xsep=2.5pt,
+          inner ysep=1.5pt, outer sep=0pt] (dgsb)
+      {$\color{dgAlert}#1$};%
+  }%
+}
+
 % ---------- figures ----------
 % Content-only helpers, so they work inside a Quarto "##" frame.
 %   \fig{path}{caption}                 one exhibit, sized to the frame
@@ -216,9 +329,16 @@
   {\raggedright\footnotesize\color{dgInk}%
    \textbf{Table \thetable:}\ #1\par\vspace{0.15em}}%
 }
+% Height is 0.42\textheight, not 0.56. At 0.56 the exhibit plus a one-line
+% caption reaches y = 197 on a 16:9 frame at 11pt, which leaves 47pt before
+% the footer -- less than the 53pt a two-line callout needs, and nothing at
+% all if the caption runs to two lines. Every figure frame in the decks
+% overran for that reason. 0.48 buys about 12pt, so the frame carries the
+% exhibit, its caption AND a two-line reading, with the fuller version on the
+% next frame or in ::: {.notes}.
 \newcommand{\fig}[2]{%
   {\centering
-   \includegraphics[width=\linewidth, height=0.56\textheight, keepaspectratio]{#1}\par}%
+   \includegraphics[width=\linewidth, height=0.42\textheight, keepaspectratio]{#1}\par}%
   \ifx\relax#2\relax\else\vspace{0.45em}\figcaption{#2}\fi
 }
 % Two figures side by side, each numbered in its own right: a pair is two
@@ -226,12 +346,12 @@
 \newcommand{\figpair}[4]{%
   \noindent
   \begin{minipage}[t]{0.48\linewidth}
-    {\centering\includegraphics[width=\linewidth, height=0.50\textheight,
+    {\centering\includegraphics[width=\linewidth, height=0.44\textheight,
        keepaspectratio]{#1}\par}%
     \vspace{0.35em}\figcaption{#2}%
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
-    {\centering\includegraphics[width=\linewidth, height=0.50\textheight,
+    {\centering\includegraphics[width=\linewidth, height=0.44\textheight,
        keepaspectratio]{#3}\par}%
     \vspace{0.35em}\figcaption{#4}%
   \end{minipage}%

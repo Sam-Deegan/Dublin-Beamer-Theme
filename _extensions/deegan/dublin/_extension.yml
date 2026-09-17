@@ -12,7 +12,7 @@ contributes:
       aspectratio: 169
       classoption:
         - t          # top-align frame content, like a document page
-      fontsize: 11pt
+      fontsize: 10pt
       theme: default
       colortheme: default
       fonttheme: professionalfonts

@@ -169,6 +169,30 @@ end
 --   1. **Heading** Body text.
 --   :::
 
+-- As with .tablenotes below, the heading and the body stay as pandoc
+-- objects wrapped in raw braces rather than being flattened to a LaTeX
+-- string here. Flattening them is what stopped a citation working inside a
+-- .contributions item: citeproc runs after this filter and cannot see a
+-- citation that has already become raw LaTeX, so [@whelan2023] printed
+-- literally on the slide. \contribution is \long for the same reason
+-- \dgnotes is.
+local function split_lead_blocks(blocks)
+  if #blocks == 0 then return nil, {} end
+  local first = blocks[1]
+  if first.t ~= 'Para' and first.t ~= 'Plain' then return nil, blocks end
+  local ils = first.content
+  if #ils == 0 or ils[1].t ~= 'Strong' then return nil, blocks end
+  local lead = ils[1].content
+  local rest_ils = {}
+  for i = 2, #ils do rest_ils[#rest_ils + 1] = ils[i] end
+  while #rest_ils > 0 and rest_ils[1].t == 'Space' do
+    table.remove(rest_ils, 1)
+  end
+  local rest = { pandoc.Plain(rest_ils) }
+  for i = 2, #blocks do rest[#rest + 1] = blocks[i] end
+  return lead, rest
+end
+
 local function contributions(el)
   local list = first_list(el)
   if not list then
@@ -177,13 +201,16 @@ local function contributions(el)
   end
   local out = {}
   for i, item in ipairs(list) do
-    local heading, body = split_lead(item)
+    local heading, body = split_lead_blocks(item)
     if not heading then
-      warn('.contributions item has no bold heading: ' .. body:sub(1, 40))
-      heading, body = body, ''
+      warn('.contributions item has no bold heading')
+      heading, body = {}, item
     end
-    out[#out + 1] = raw('\\contribution{' .. i .. '}{' .. heading
-                        .. '}{' .. body .. '}')
+    out[#out + 1] = raw('\\contribution{' .. i .. '}{')
+    out[#out + 1] = pandoc.Plain(heading)
+    out[#out + 1] = raw('}{')
+    for _, blk in ipairs(body) do out[#out + 1] = blk end
+    out[#out + 1] = raw('}')
   end
   return out
 end
@@ -194,8 +221,22 @@ end
 --   :::
 -- .notes is left alone: pandoc maps that to beamer speaker notes.
 
+-- The content stays as pandoc blocks, wrapped in raw braces, instead of
+-- being written out to a LaTeX string here. Flattening it early is what
+-- stopped citations working inside notes: citeproc runs after this filter
+-- and cannot see a citation that has already become raw LaTeX. \dgnotes is
+-- \long, so a note may run to more than one paragraph.
 local function tablenotes(el)
-  return { raw('\\dgnotes{' .. block_latex(el.content) .. '}') }
+  local title = title_of(el)
+  local open = (title ~= '')
+    and ('\\dgnotes[' .. title .. ']{')
+    or  '\\dgnotes{'
+  local out = { raw(open) }
+  for _, blk in ipairs(el.content) do
+    out[#out + 1] = blk
+  end
+  out[#out + 1] = raw('}')
+  return out
 end
 
 -- --------------------------------------------------------------- nav pills

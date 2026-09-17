@@ -41,6 +41,12 @@
 \definecolor{dgRule}   {HTML}{D8E0E6}   % hairlines
 \definecolor{dgWash}   {HTML}{F2F6F9}   % block grounds
 \definecolor{dgGround} {HTML}{FFFFFF}
+% The one alert colour, and it has exactly one job: marking the term that is
+% about to be substituted from one equation into another, and marking where
+% it lands. Nothing else on a slide is this colour, so when it appears the
+% room knows what it means without being told twice.
+\definecolor{dgAlert}   {HTML}{B3261E}   % substitution highlight
+\definecolor{dgAlertBg} {HTML}{FBE9E7}   % its tint, for the landed block
 
 \setbeamercolor{background canvas}{bg=dgGround}
 \setbeamercolor{normal text}{fg=dgInk}
@@ -62,7 +68,9 @@
 % Left aligned, generous space above, a hairline beneath, and an optional
 % second line via \framesubtitle. No coloured bar: the rule does the work.
 \setbeamercolor{frametitle}{fg=dgNavy, bg=}
-\setbeamerfont{frametitle}{series=\bfseries, size=\large}
+% Body text is the class size, 10pt. The frame title is pinned at an
+% absolute 12pt so it does not shrink with the body.
+\setbeamerfont{frametitle}{series=\bfseries, size*={12}{14}}
 \setbeamerfont{framesubtitle}{series=\mdseries, size=\small}
 \setbeamercolor{framesubtitle}{fg=dgMuted}
 
@@ -376,6 +384,52 @@
 \setbeamercolor{itemize/enumerate body}{fg=dgInk}
 \setlength{\leftmargini}{1.4em}
 
+% ---------- speaker notes ----------
+% Hidden by default, so a ::: {.notes} block never reaches a student deck.
+% The `presenter` profile includes _shared/presenter-notes.tex after this
+% file and overrides it with "show notes on second screen=right".
+\setbeameroption{hide notes}
+
+% ---------- list spacing ----------
+% Beamer sets list items almost on top of one another, which reads as a wall
+% of text from the back of a lecture theatre. Top-level items get room to
+% breathe; nested items get less than half of it, so the hierarchy stays
+% visible without the block coming apart.
+%
+% This has to be done by redefining \@listi and friends. Setting \itemsep
+% from inside the environment does not work: etoolbox's \AtBeginEnvironment
+% fires before \list runs, and \list then overwrites the length with the
+% value from \@listi. Tested both ways; only this one moves the type.
+\def\@listi{\leftmargin\leftmargini
+  \topsep 0.40em \parsep \z@ \partopsep \z@ \itemsep 0.75em}
+\let\@listI\@listi
+\def\@listii{\leftmargin\leftmarginii
+  \labelwidth\leftmarginii \advance\labelwidth-\labelsep
+  \topsep 0.25em \parsep \z@ \itemsep 0.30em}
+\def\@listiii{\leftmargin\leftmarginiii
+  \labelwidth\leftmarginiii \advance\labelwidth-\labelsep
+  \topsep 0.20em \parsep \z@ \itemsep 0.25em}
+
+% ---------- pandoc's \tightlist ----------
+% Pandoc puts \tightlist as the first thing inside every list whose items are
+% not separated by blank lines in the markdown, and defines it as
+%   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}
+% That runs INSIDE the list, after \list has already read \@listi, so it
+% silently overrode everything set above: measured on the Lecture 1.1 render,
+% the gap between one bullet and the next was 13.5pt — exactly the line
+% spacing within a single bullet, i.e. no separation at all. Only lists
+% written with blank lines between items escaped it, which is why those look
+% right and ordinary ones do not.
+%
+% Neutralising it hands the spacing back to \@listi above, so the 0.75em
+% actually reaches the slide. Lists written with blank lines are unchanged:
+% pandoc does not emit \tightlist for those.
+%
+% \def rather than \renewcommand, because this file is also usable outside
+% pandoc, where \tightlist does not exist. \AtBeginDocument, because
+% pandoc's own \providecommand can come after this file in the preamble.
+\AtBeginDocument{\def\tightlist{}}
+
 % ---------- blocks ----------
 % Flat, with a left accent bar instead of a title bar.
 \setbeamercolor{block title}{fg=dgNavy, bg=dgWash}
@@ -448,10 +502,10 @@
 \newcommand{\yes}{\checkmark}
 \newcommand{\no}{}
 
-\newcommand{\dgnotes}[1]{%
-  \par\vspace{0.45em}%
-  {\scriptsize\color{dgInk}\textbf{\textit{Notes:}}\ #1\par}%
-}
+% \dgnotes lives in dublin-components.tex now, with the other callouts,
+% because it is one of them: same wash panel, same left bar. It used to be
+% a bold italic "Notes:" label floating in the body, which read as a
+% typesetting accident next to a .defn or .takeaway box.
 
 % ---------- captions ----------
 % No "Figure 1:" label on a slide; the caption is the sentence under the

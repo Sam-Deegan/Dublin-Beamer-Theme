@@ -514,7 +514,7 @@ that uses it directly — upload that folder to Overleaf, set the compiler to
 pdfLaTeX, and it builds as it stands:
 
 ```latex
-\documentclass[aspectratio=169,11pt,t]{beamer}
+\documentclass[aspectratio=169,10pt,t]{beamer}
 \input{dublin-theme.tex}
 \input{dublin-components.tex}
 
